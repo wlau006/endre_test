@@ -12,7 +12,7 @@ encode, store the fingerprint or whatever, also store corresponding string (unor
 obviously need a way of determining which chunk of memory exactly was modified and being able to identify and replace said chunk of memory in the destination
 
 
-the most confusing thing becomes of course how exactly I will measure the performance of each since
+the most confusing thing becomes of course how exactly I will measure the performance of each
 
 obviously runtime, overall reduction in bytes "sent" since i will probably not actually send them (unless I should, at which point i need to draft up a quick socket program to actually transfer bytes),
 and then maybe memory overhead (which i'm not sure how i'll measure?)
