@@ -29,3 +29,35 @@ the most confusing thing becomes of course how exactly I will measure the perfor
 
 obviously runtime, overall reduction in bytes "sent" since i will probably not actually send them (unless I should, at which point i need to draft up a quick socket program to actually transfer bytes),
 and then maybe memory overhead (which i'm not sure how i'll measure?)
+
+after rereading ENDRE i realized that the two matching algorithms at either end are different entirely
+
+
+Chunk-Match, the first strategies, does not use the fingerprints at all, but rather only the markers.
+it will compute the hash of the entire chunk between each variable distance marker, then store those hashes
+
+
+Max-Match is the one utilizing the fingerprints, but endre doesn't provide an exact pseudocode like it does with fingerprinting algorithms.
+
+according to the paper:
+
+In Max-Match, fingerprints computed for a data block serve as random “hooks” into the
+data block payload around which more redundancies can
+be identified.
+The computed fingerprints for a data block are compared with a “fingerprint store” that holds fingerprints
+of all the past data blocks. For each fingerprint of the
+data block that is matched against the fingerprint store,
+the matching previous data block is retrieved from the
+cache and the matching region is expanded byte-by-byte
+in both directions to obtain the maximal region of redundant bytes (Figure 5). Matched regions are then encoded
+with (offset, length) tuples identifying the matching region in the client’s cache.
+
+
+as I understand it, there is a cache of previously transferred blocks alongside a cache of fingerprints
+a set of fingerprints are generated for a new block, then transferred to the client, which has a store of fingerprints.
+these new fingerprints are compared against the cached fingerprints. if there is a hit, we must do a byte by byte expansion and comparison between the new and cached blocks in order to find a maximal region of redundancy. 
+
+the confusing portion is that the article does no specific the actual underlying protocol they follow with regards to the caching/client server interaction so it becomes difficult to try to implement it without using my own interpretation. it could be that the fingerprint along with the new data block are transferred simultaneously, but that would seemingly defeat the purpose of the RE in the first place.
+This same logic follows in the case that the server sends the client the new data block, and the client hte computes the fingerprints there etc etc.
+
+additionally they list several optimizations like offloading computational costs to the server, but that would most likely not be possible in the context of this research since there is no "server".

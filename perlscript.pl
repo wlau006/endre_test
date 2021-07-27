@@ -52,5 +52,5 @@ for(@a){
 
 system ("echo =========="); #DEBUG
 system ("cat newtext.txt"); #DEBUG
-system ("cp newtext.txt oldtext.txt"); #DEBUG
+#system ("cp newtext.txt oldtext.txt"); #DEBUG
 system ("echo =========="); #DEBUG

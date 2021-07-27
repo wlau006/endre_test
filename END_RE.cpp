@@ -12,21 +12,6 @@
 //store marker,fingerprint in table;
 //i = i + p/2;
 
-
-uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
-  size_t i = 0;
-  uint32_t hash = 0;
-  while (i != length) {
-    hash += key[i++];
-    hash += hash << 10;
-    hash ^= hash >> 6;
-  }
-  hash += hash << 3;
-  hash ^= hash >> 11;
-  hash += hash << 15;
-  return hash;
-}
-
 #include <vector>
 #include <map>
 #include <list>
@@ -38,52 +23,99 @@ uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
 #include <random>
 #include <string>
 #include <unordered_map>
+#include <stdint.h>
 
 
 #define FILESIZE 10000
 using namespace std;
 
-unordered_map <int,uint32_t> samplebyte (string data){
-    int w = 32, p = 32, tablesize = 256, marker = 0;
-    unordered_map<int,uint32_t> out;
-    string temp;
-    uint32_t fingerprint;
-
-    int sampletable[tablesize] = {0};
+vector<int> sampletable (int tablesize, int p){
+    vector<int> sampletable(tablesize, 0);
     int x = tablesize/p;
+    cout << "X: " << x << endl;
     for(int i = 0; i < x; i++){
-        sampletable[i] = 1;
+        sampletable.at(i) = 1;
     }
     unsigned seed = time(0);
-    shuffle (sampletable, sampletable+tablesize, std::default_random_engine(seed));
+    shuffle (sampletable.begin(), sampletable.end(), std::default_random_engine(seed));
+    for(auto i = 0; i < sampletable.size(); i++){
+        cout << sampletable.at(i);
+    }
+    cout << endl;
+    return sampletable;
+}
+
+uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length){
+  size_t i = 0;
+  uint32_t hash = 0;
+  while (i != length) {
+    hash += key[i++];
+    //cout << hash << endl;
+    hash += hash << 10;
+    //cout << hash << endl;
+    hash ^= hash >> 6;
+    //cout << hash << endl;
+  }
+  hash += hash << 3;
+  //cout << hash << endl;
+  hash ^= hash >> 11;
+  //cout << hash << endl;
+  hash += hash << 15;
+  //cout << hash << endl;
+  //cout << "______________" << endl;
+  return hash;
+}
+
+unordered_map <int,uint32_t> samplebyte (string data, int p, vector<int> sampletable){
+    int w = 32, marker = 0;
+    unordered_map<int,uint32_t> out;
+    string temp = "";
+    uint32_t fingerprint;
+    int debughitcounter = 0;
     int filesize = FILESIZE;
+    cout << "Filesize: " << FILESIZE << endl;
     for(int i = 0; i < filesize - w; i++ ){
         unsigned char d = data.at(i);
-        if (sampletable[int(d)] == 1){
+        //cout << d << endl;
+        if (sampletable.at(int(d)) == 1){
+            debughitcounter++;
             marker = i;
-            for(int j = 0; j < w; j++){
+            for(int j = i; j < w; j++){
                 temp += data.at(j);
             }
-            const uint8_t* pointer = reinterpret_cast<const uint8_t*>(temp.c_str());
             size_t jenkins = w;
+            uint8_t* pointer = reinterpret_cast <uint8_t*>(&temp[0]);
             fingerprint = jenkins_one_at_a_time_hash(pointer,jenkins);
+            //cout << fingerprint << endl;
             //store marker,fingerprint in table;
             out.insert(make_pair(marker,fingerprint));
             i = i + p/2;
         }
+        temp = "";
     }
+    cout << "SampleTable Hits: " << debughitcounter << endl;
     return out;
 }
 
+
 int main(){
     string data;
-    unordered_map <int,uint32_t> output;
-    fstream f("newtext.txt", fstream::in);
+    int tablesize = 256, p = 32;
+    vector<int> st = sampletable(tablesize,p);
+
+    unordered_map <int,uint32_t> oldfingerprint;
+    fstream f("oldtext.txt", fstream::in);
     ostringstream sstr;
     sstr << f.rdbuf();
     data = sstr.str();
-    
-    output = samplebyte(data);
+    cout << data << endl;
+
+    oldfingerprint = samplebyte(data,p,st);
+
+    for(auto it = oldfingerprint.cbegin(); it != oldfingerprint.cend(); ++it)
+    {
+        std::cout << it->first << " " << it->second << "\n";
+    }
 
     return 0;
 }
