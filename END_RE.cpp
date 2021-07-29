@@ -1,16 +1,4 @@
-#include <vector>
-#include <map>
-#include <list>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <algorithm>
-#include <time.h>
-#include <random>
-#include <string>
-#include <unordered_map>
-#include <stdint.h>
-
+#include "END_RE.h"
 
 #define FILESIZE 10000
 using namespace std;
@@ -29,7 +17,7 @@ vector<int> sampletable (int tablesize, int p){
     }
     cout << endl;
     return sampletable;
-}
+};
 
 uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length){
   size_t i = 0;
@@ -44,7 +32,7 @@ uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length){
   hash ^= hash >> 11;
   hash += hash << 15;
   return hash;
-}
+};
 
 //Let w = 32; p = 32; Assume len ≥ w;
 //where w is the minimum size of redundant bytes we would like to check
@@ -89,7 +77,7 @@ unordered_map <int,uint32_t> samplebyte (string data, int p, vector<int> samplet
     }
     cout << "SampleTable Hits: " << debughitcounter << endl;
     return out;
-}
+};
 
 
 //Let w = 32; p = 32; Assume len ≥ w;
@@ -147,7 +135,7 @@ unordered_map <int,uint32_t> modp (string data, int p, int w){
         }
     }
     return out;
-}
+};
 
 unordered_map <int,uint32_t> maxp (string data, int p, int w){
     int marker = 0;
@@ -174,7 +162,7 @@ unordered_map <int,uint32_t> maxp (string data, int p, int w){
         max = 0;
     }
     return out;
-}
+};
 
 unordered_map <int,uint32_t> fixed (string data, int p, int w){
     int marker = 0;
@@ -194,62 +182,62 @@ unordered_map <int,uint32_t> fixed (string data, int p, int w){
         temp = "";
     }
     return out;
-}
+};
 
-
-int main(){
-    string data, data2;
-    int tablesize = 256, w = 32, p = 32;
-    vector<int> st;
-
-    cout << "Filesize: " << FILESIZE << endl;
-
-    unordered_map <int,uint32_t> oldfingerprint;
-    unordered_map <int,uint32_t> newfingerprint;
-    fstream f1("oldtext.txt", fstream::in);
-    ostringstream file1;
-    file1 << f1.rdbuf();
-    data = file1.str();
-    //cout << data << endl;
-
-    fstream f2("newtext.txt", fstream::in);
-    ostringstream file2;
-    file2 << f2.rdbuf();
-    data2 = file2.str();
-
-    int input = 0;
-    cout << "0(samplebyte) or 1(modp) or 2(maxp) or 3(fixed)" << endl;
-    cin >> input;
-    switch(input){
-        case 0:
-            st = sampletable(tablesize,p);
-            oldfingerprint = samplebyte(data,p,st,w);
-            newfingerprint = samplebyte(data2,p,st,w);
-        break;
-        case 1:
-            oldfingerprint = modp(data,p,w);
-            newfingerprint = modp(data2,p,w);
-        break;
-        case 2:
-            oldfingerprint = maxp(data,p,w);
-            newfingerprint = maxp(data2,p,w);
-        break;
-        case 3:
-            oldfingerprint = fixed(data,p,w);
-            newfingerprint = fixed(data2,p,w);
-        break;
-    }
-
-    for(auto it = oldfingerprint.cbegin(); it != oldfingerprint.cend(); ++it)
-    {
-        std::cout << it->first << " " << it->second << "\n";
-    }
-    
-    cout << "---------------------------------------------------" << endl;
-
-    for(auto it = newfingerprint.cbegin(); it != newfingerprint.cend(); ++it)
-    {
-        std::cout << it->first << " " << it->second << "\n";
-    }
-    return 0;
-}
+//
+//int main(){
+//    string data, data2;
+//    int tablesize = 256, w = 32, p = 32;
+//    vector<int> st;
+//
+//    cout << "Filesize: " << FILESIZE << endl;
+//
+//    unordered_map <int,uint32_t> oldfingerprint;
+//    unordered_map <int,uint32_t> newfingerprint;
+//    fstream f1("oldtext.txt", fstream::in);
+//    ostringstream file1;
+//    file1 << f1.rdbuf();
+//    data = file1.str();
+//    //cout << data << endl;
+//
+//    fstream f2("newtext.txt", fstream::in);
+//    ostringstream file2;
+//    file2 << f2.rdbuf();
+//    data2 = file2.str();
+//
+//    int input = 0;
+//    cout << "0(samplebyte) or 1(modp) or 2(maxp) or 3(fixed)" << endl;
+//    cin >> input;
+//    switch(input){
+//        case 0:
+//            st = sampletable(tablesize,p);
+//            oldfingerprint = samplebyte(data,p,st,w);
+//            newfingerprint = samplebyte(data2,p,st,w);
+//        break;
+//        case 1:
+//            oldfingerprint = modp(data,p,w);
+//            newfingerprint = modp(data2,p,w);
+//        break;
+//        case 2:
+//            oldfingerprint = maxp(data,p,w);
+//            newfingerprint = maxp(data2,p,w);
+//        break;
+//        case 3:
+//            oldfingerprint = fixed(data,p,w);
+//            newfingerprint = fixed(data2,p,w);
+//        break;
+//    }
+//
+//    for(auto it = oldfingerprint.cbegin(); it != oldfingerprint.cend(); ++it)
+//    {
+//        std::cout << it->first << " " << it->second << "\n";
+//    }
+//    
+//    cout << "---------------------------------------------------" << endl;
+//
+//    for(auto it = newfingerprint.cbegin(); it != newfingerprint.cend(); ++it)
+//    {
+//        std::cout << it->first << " " << it->second << "\n";
+//    }
+//    return 0;
+//}
