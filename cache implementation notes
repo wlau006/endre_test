@@ -1,0 +1,78 @@
+With regards to MaxMatch:
+
+for the fingerprint store, a basic LRU cache that we've already implemented is probably sufficient
+
+the key value is the fingerprint itself
+the stored value in the hash table is the marker determining where in the whole block the fingerprint was.
+
+the keyvalue is allowed to be a fingerprint since the collisions are unlikely
+but if they do occur they will be resolved by the MaxMatch byte-by-byte comparison
+
+if this occurs, we would need to probably replace the older fingerprint in the cache rather than using the global LRU
+
+***issue is that the marker does not know where in the local cache to look for the block, might need to store this alongside the marker itself
+
+This leads to the issue of how to implement the chunkstore.
+This chunkstore is where we will commit to comparing the old chunk with new.
+
+This chunkstore will most likely have to be a fair amount larger than whatever size 
+block we decide to use samplebyte on, 
+unless i modify samplebyte to do 1 by 1 comparisons of chunks/fingerprints for each block
+
+the chunkstore also needs to be able to be synchronized across the sender/receiver since
+otherwise the sender will not be able to know where the chunk is located in the receiver cache
+the chunkstore might end up literally being a reserved chunk of memory where an external
+data structure keeps track of location and temporal information about the contents.
+this way the synchronization of this chunk store will allow for cutting down transmissions b/w
+sender/receiver to:
+a. adding/removing something from the chunk store
+b. sending location metadata to allow the client to locate where in the chunkstore to pull the requested data
+
+ENDRE weirdly seems to suggest you store every single block passing through in its entirety,
+but seperated in some way, i don't know how this would work, as it introduces weird scenarios
+for example, the replacement policies for the fingerpints and the chunks would need to be intrinsically linked
+if i remove the entire block, i would also need to remove any fingerprints that referenced that block
+
+
+currently, the implementation is planned to:
+1. run samplebyte
+2. take the outputs of samplebyte, which is a set of fingerprints/markers, store them in memory
+3. take a fingerprint/marker pair, compare to the fingerprint store
+4a. if there is a hit, 
+    we update the fingerprint store cache ordering**
+    (endre seems to suggest there is no replacement policy?)
+    find in the chunk store the fingerprint's origin,
+    expand outwards in that block to find a maximal region of redundancy.
+    encode that info into metadata that tells the receiver where to look in its cache
+    transmit the metadata
+4b. if there is no hit,
+    we add/remove fingerpints from the store as needed, 
+    add/remove chunks from chunkstore as needed. 
+    transmit the chunk and tell the client to update its chunkstore
+5. repeat this process until you finish with that block
+6. receive the next block and return to 1.
+
+
+
+With regards to Chunk Match:
+
+in contrast to maxmatch, chunkmatch only has two caches, and one is considerable smaller
+
+on the sender side, we need a cache that will store hashes of the chunks
+and perhaps metadata that points to where in the receiver's cache the actual chunk is stored.
+that means that the caches must be synchronized as well in order to ensure that there is no
+misreading of the data.
+
+we also must find out how to do a SHA-1 hash as it is integral to the process since the chunkstore
+relies on the near zero collision chance of SHA-1.
+
+currently, the implementation is planned to:
+1. run some marker algorithm (i.e. fixed intervals, but without the fingerprinting step).
+2. compute the hashes between the markers.
+3. compare hashes to chunkhash store
+4a. if there is a hit
+    update chunkhash store ordering
+    transmit the metadata that points to where in the client's chunk store to look
+5. if there is not hit
+    add/remove from chunkhash store as needed (create mapping for new hash to actual chunk store)
+    transmit chunk to the client

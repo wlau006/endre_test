@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include "cache.h"
 
 using namespace std;
 

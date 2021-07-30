@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include "END_RE.h"
+#include "cache.h"
 
 using namespace std;
 
