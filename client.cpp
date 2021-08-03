@@ -10,6 +10,8 @@
 #include <arpa/inet.h>
 #include "END_RE.h"
 #include "cache.h"
+#include <iostream>
+#include "sha1.hpp"
 
 using namespace std;
 
@@ -58,66 +60,79 @@ int main(){
   file2 << f2.rdbuf();
   data2 = file2.str();
   int input = 0;
-  cout << "0(samplebyte) or 1(modp) or 2(maxp) or 3(fixed)" << endl;
+  cout << "0(maxmatch) or 1(chunkmatch)" << endl;
   cin >> input;
   switch(input){
     case 0:
-      st = sampletable(tablesize,p);
-      oldfingerprint = samplebyte(data,p,st,w);
-      newfingerprint = samplebyte(data2,p,st,w);
+      cout << "0(samplebyte) or 1(modp) or 2(maxp) or 3(fixed)" << endl;
+      cin >> input;
+      switch(input){
+        case 0:
+          st = sampletable(tablesize,p);
+          oldfingerprint = samplebyte(data,p,st,w);
+          newfingerprint = samplebyte(data2,p,st,w);
+        break;
+        case 1:
+          oldfingerprint = modp(data,p,w);
+          newfingerprint = modp(data2,p,w);
+        break;
+        case 2:
+          oldfingerprint = maxp(data,p,w);
+          newfingerprint = maxp(data2,p,w);
+        break;
+        case 3:
+          oldfingerprint = fixed(data,p,w);
+          newfingerprint = fixed(data2,p,w);
+        break;
+      }
+      //for(auto it = oldfingerprint.cbegin(); it != oldfingerprint.cend(); ++it)
+      //{
+      //    std::cout << it->first << " " << it->second << "\n";
+      //}
+      //
+      //cout << "---------------------------------------------------" << endl;
+      //for(auto it = newfingerprint.cbegin(); it != newfingerprint.cend(); ++it)
+      //{
+      //      std::cout << it->first << " " << it->second << "\n";
+      //}
+      for(auto it = oldfingerprint.cbegin(); it != oldfingerprint.cend(); ++it){
+        cout << "key being sent: " << it->first << endl;
+        sprintf(sendBuff, "%d", it->first);
+        cout << "SEND BUFFER: ";
+        for(int i = 0; sendBuff[i] != '\0'; i++){
+          cout << sendBuff[i];
+        }
+        cout << endl;
+        send(sockfd, sendBuff, sizeof(sendBuff), 0);
+        recv(sockfd, recvBuff, sizeof(recvBuff), MSG_WAITALL);
+        cout << "RECV BUFFER: ";
+        for(int i = 0; recvBuff[i] != '\0'; i++){
+          cout << recvBuff[i];
+        }
+        cout << endl;
+        cout << "fingerprint being sent: " << it->second << endl;
+        sprintf(sendBuff, "%u", it->second);
+        cout << "SEND BUFFER: ";
+        for(int i = 0; sendBuff[i] != '\0'; i++){
+          cout << sendBuff[i];
+        }
+        cout << endl;
+        send(sockfd, sendBuff, sizeof(sendBuff), 0);
+        recv(sockfd, recvBuff, sizeof(recvBuff), MSG_WAITALL);
+        cout << "RECV BUFFER: ";
+        for(int i = 0; recvBuff[i] != '\0'; i++){
+          cout << recvBuff[i];
+        }
+        cout << endl;
+      }
     break;
     case 1:
-      oldfingerprint = modp(data,p,w);
-      newfingerprint = modp(data2,p,w);
+      
     break;
-    case 2:
-      oldfingerprint = maxp(data,p,w);
-      newfingerprint = maxp(data2,p,w);
-    break;
-    case 3:
-      oldfingerprint = fixed(data,p,w);
-      newfingerprint = fixed(data2,p,w);
+    default :
+      cout << "invalid option" << endl;
     break;
   }
-  //for(auto it = oldfingerprint.cbegin(); it != oldfingerprint.cend(); ++it)
-  //{
-  //    std::cout << it->first << " " << it->second << "\n";
-  //}
-  //
-  //cout << "---------------------------------------------------" << endl;
-  //for(auto it = newfingerprint.cbegin(); it != newfingerprint.cend(); ++it)
-  //{
-  //    std::cout << it->first << " " << it->second << "\n";
-  //}
-  for(auto it = oldfingerprint.cbegin(); it != oldfingerprint.cend(); ++it){
-    cout << "key being sent: " << it->first << endl;
-    sprintf(sendBuff, "%d", it->first);
-    cout << "SEND BUFFER: ";
-    for(int i = 0; sendBuff[i] != '\0'; i++){
-      cout << sendBuff[i];
-    }
-    cout << endl;
-    send(sockfd, sendBuff, sizeof(sendBuff), 0);
-    recv(sockfd, recvBuff, sizeof(recvBuff), MSG_WAITALL);
-    cout << "RECV BUFFER: ";
-    for(int i = 0; recvBuff[i] != '\0'; i++){
-      cout << recvBuff[i];
-    }
-    cout << endl;
-    cout << "fingerprint being sent: " << it->second << endl;
-    sprintf(sendBuff, "%u", it->second);
-    cout << "SEND BUFFER: ";
-    for(int i = 0; sendBuff[i] != '\0'; i++){
-      cout << sendBuff[i];
-    }
-    cout << endl;
-    send(sockfd, sendBuff, sizeof(sendBuff), 0);
-    recv(sockfd, recvBuff, sizeof(recvBuff), MSG_WAITALL);
-    cout << "RECV BUFFER: ";
-    for(int i = 0; recvBuff[i] != '\0'; i++){
-      cout << recvBuff[i];
-    }
-    cout << endl;
-  }
+
   return 0;
 }
