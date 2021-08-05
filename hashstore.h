@@ -4,12 +4,12 @@
 #include <list>
 #include <string>
 
-class lrucache{
+class hashstore{
     private:
 	    std::list<std::string> values;
 	    std::unordered_map<std::string, std::list<std::string>::iterator> ref;
 	    int size;
 	public:
-	    lrucache(int);
-	    void insert(std::string);
+	    hashstore(int);
+	    bool insert(std::string);
 };

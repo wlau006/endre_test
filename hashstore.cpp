@@ -1,11 +1,12 @@
-#include "cache.h"
+#include "hashstore.h"
 
 
-lrucache::lrucache(int capacity){
+hashstore::hashstore(int capacity){
     size = capacity;
 }
 
-void lrucache::insert(std::string val){
+bool hashstore::insert(std::string val){
+	bool found = false;
 	if(ref.find(val) == ref.end()){
 		if(ref.size() == size){
 			std::string x = values.back();
@@ -14,8 +15,10 @@ void lrucache::insert(std::string val){
 		}
 	}
 	else{
+		found = true;
 	    values.erase(ref.find(val)->second);
 	}
 	values.push_front(val);
 	ref[val]=values.begin();
+	return found;
 }

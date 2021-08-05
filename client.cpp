@@ -9,17 +9,23 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include "END_RE.h"
-#include "cache.h"
+#include "hashstore.h"
 #include <iostream>
 #include <fstream>
 #include "sha1.hpp"
 
+#define BLOCKSIZE 4096 //this will be a divisor of the filesize in bytes in our case.
+#define CHUNKSIZE BLOCKSIZE/4
+#define HASHSTORESIZE 100
+
 using namespace std;
+
+
 
 int main(){
   int sockfd = 0,n = 0;
-  char recvBuff[1025];
-  char sendBuff[1025];
+  char recvBuff[1024];
+  char sendBuff[2048];
   struct sockaddr_in serv_addr;
 
   //printf("1\n");
@@ -43,27 +49,38 @@ int main(){
     printf("\n Error : Connect Failed \n");
     return 1;
   }
-  int tablesize = 256, w = 32, p = 32;
-  vector<int> st;
-  unordered_map <int,uint32_t> oldfingerprint;
-  unordered_map <int,uint32_t> newfingerprint;
   ostringstream file1;
-  ostringstream file2;
   fstream f1("oldtext.txt", fstream::in);
-  fstream f2("newtext.txt", fstream::in);
-  string data, data2;
-      int partition_size = 10000/4;
-      for(int i = 0; i < 4; i++){
-       f1.seekg(partition_size * i, f1.beg);
-       char * charbuffer = new char [partition_size];
-       f1.read(charbuffer,partition_size);
-       string funcinput = charbuffer;
-       SHA1 hashing_func;
-       hashing_func.update(funcinput);
-       string hashout = hashing_func.final();
-       sprintf(sendBuff,"%c",hashout);
-       send(sockfd,sendBuff,sizeof(sendBuff),0);
-      }
+  hashstore HS(HASHSTORESIZE);
+  SHA1 hashing_func;
+  char * charbuffer = new char [CHUNKSIZE+1];
+  int i = 0;
+  while(!f1.eof()){
+	string hash = "h";
+	string chunk = "c";
+	f1.seekg(CHUNKSIZE * i, f1.beg);
+	f1.read(charbuffer,CHUNKSIZE);
+	
+	charbuffer[CHUNKSIZE] = '\0';
+	string funcinput = charbuffer;
+	hashing_func.update(funcinput);
+	string hashout = hashing_func.final();
+	
+	if(HS.insert(hashout)){
+		printf("Found duplicate chunk, sending hash to receiver\n");
+		hash += hashout;
+		sprintf(sendBuff,"%s",hash.c_str());
+		send(sockfd,sendBuff,sizeof(sendBuff),0);
+	}else{
+		printf("New chunk, sending chunk, then hash to receiver\n");
+		chunk += funcinput;
+		sprintf(sendBuff,"%s",chunk.c_str());
+		send(sockfd,sendBuff,sizeof(sendBuff),0);
+		sprintf(sendBuff,"%s",hashout.c_str());
+		send(sockfd,sendBuff,sizeof(sendBuff),0);
+	}
+	i++;
+  }
 
   return 0;
 }
