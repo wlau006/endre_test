@@ -11,6 +11,7 @@
 #include "END_RE.h"
 #include "cache.h"
 #include <iostream>
+#include <fstream>
 #include "sha1.hpp"
 
 using namespace std;
@@ -42,97 +43,27 @@ int main(){
     printf("\n Error : Connect Failed \n");
     return 1;
   }
-  
-
-  string data, data2;
   int tablesize = 256, w = 32, p = 32;
   vector<int> st;
-  cout << "Filesize: " << 10000 << endl;
   unordered_map <int,uint32_t> oldfingerprint;
   unordered_map <int,uint32_t> newfingerprint;
-  fstream f1("oldtext.txt", fstream::in);
   ostringstream file1;
-  file1 << f1.rdbuf();
-  data = file1.str();
-  //cout << data << endl;
-  fstream f2("newtext.txt", fstream::in);
   ostringstream file2;
-  file2 << f2.rdbuf();
-  data2 = file2.str();
-  int input = 0;
-  cout << "0(maxmatch) or 1(chunkmatch)" << endl;
-  cin >> input;
-  switch(input){
-    case 0:
-      cout << "0(samplebyte) or 1(modp) or 2(maxp) or 3(fixed)" << endl;
-      cin >> input;
-      switch(input){
-        case 0:
-          st = sampletable(tablesize,p);
-          oldfingerprint = samplebyte(data,p,st,w);
-          newfingerprint = samplebyte(data2,p,st,w);
-        break;
-        case 1:
-          oldfingerprint = modp(data,p,w);
-          newfingerprint = modp(data2,p,w);
-        break;
-        case 2:
-          oldfingerprint = maxp(data,p,w);
-          newfingerprint = maxp(data2,p,w);
-        break;
-        case 3:
-          oldfingerprint = fixed(data,p,w);
-          newfingerprint = fixed(data2,p,w);
-        break;
+  fstream f1("oldtext.txt", fstream::in);
+  fstream f2("newtext.txt", fstream::in);
+  string data, data2;
+      int partition_size = 10000/4;
+      for(int i = 0; i < 4; i++){
+       f1.seekg(partition_size * i, f1.beg);
+       char * charbuffer = new char [partition_size];
+       f1.read(charbuffer,partition_size);
+       string funcinput = charbuffer;
+       SHA1 hashing_func;
+       hashing_func.update(funcinput);
+       string hashout = hashing_func.final();
+       sprintf(sendBuff,"%c",hashout);
+       send(sockfd,sendBuff,sizeof(sendBuff),0);
       }
-      //for(auto it = oldfingerprint.cbegin(); it != oldfingerprint.cend(); ++it)
-      //{
-      //    std::cout << it->first << " " << it->second << "\n";
-      //}
-      //
-      //cout << "---------------------------------------------------" << endl;
-      //for(auto it = newfingerprint.cbegin(); it != newfingerprint.cend(); ++it)
-      //{
-      //      std::cout << it->first << " " << it->second << "\n";
-      //}
-      for(auto it = oldfingerprint.cbegin(); it != oldfingerprint.cend(); ++it){
-        cout << "key being sent: " << it->first << endl;
-        sprintf(sendBuff, "%d", it->first);
-        cout << "SEND BUFFER: ";
-        for(int i = 0; sendBuff[i] != '\0'; i++){
-          cout << sendBuff[i];
-        }
-        cout << endl;
-        send(sockfd, sendBuff, sizeof(sendBuff), 0);
-        recv(sockfd, recvBuff, sizeof(recvBuff), MSG_WAITALL);
-        cout << "RECV BUFFER: ";
-        for(int i = 0; recvBuff[i] != '\0'; i++){
-          cout << recvBuff[i];
-        }
-        cout << endl;
-        cout << "fingerprint being sent: " << it->second << endl;
-        sprintf(sendBuff, "%u", it->second);
-        cout << "SEND BUFFER: ";
-        for(int i = 0; sendBuff[i] != '\0'; i++){
-          cout << sendBuff[i];
-        }
-        cout << endl;
-        send(sockfd, sendBuff, sizeof(sendBuff), 0);
-        recv(sockfd, recvBuff, sizeof(recvBuff), MSG_WAITALL);
-        cout << "RECV BUFFER: ";
-        for(int i = 0; recvBuff[i] != '\0'; i++){
-          cout << recvBuff[i];
-        }
-        cout << endl;
-      }
-    break;
-    case 1:
-      
-    break;
-    default :
-      cout << "invalid option" << endl;
-    break;
-  }
 
   return 0;
 }

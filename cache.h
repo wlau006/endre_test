@@ -1,15 +1,15 @@
 #pragma once
-#include<iostream>
-#include<unordered_map>
-#include<list>
+#include <iostream>
+#include <unordered_map>
+#include <list>
+#include <string>
 
 class lrucache{
     private:
-	    std::list<unsigned int> values;
-	    std::unordered_map<unsigned int, std::list<unsigned int>::iterator> ref;
+	    std::list<std::string> values;
+	    std::unordered_map<std::string, std::list<std::string>::iterator> ref;
 	    int size;
 	public:
 	    lrucache(int);
-	    void insert(unsigned int);
-	    void contents(); //debug
+	    void insert(std::string);
 };
