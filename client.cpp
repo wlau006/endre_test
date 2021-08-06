@@ -50,7 +50,7 @@ int main(){
     return 1;
   }
   ostringstream file1;
-  fstream f1("oldtext.txt", fstream::in);
+  fstream f1("input.txt", fstream::in);
   hashstore HS(HASHSTORESIZE);
   SHA1 hashing_func;
   char * charbuffer = new char [CHUNKSIZE+1];
