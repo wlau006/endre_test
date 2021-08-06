@@ -1,5 +1,5 @@
 #!/bin/bash
-< /dev/urandom tr -dc "[:space:][:print:]" | head -c1000000 > basetext.txt
+time dd if=/dev/urandom of=basetext.txt bs=1024000 count=1
 cp basetext.txt modtext.txt
 cat basetext.txt > input.txt
 counter=1

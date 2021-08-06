@@ -45,9 +45,9 @@ system ("echo =========="); #DEBUG
 #system ("cp oldtext.txt newtext.txt"); #DEBUG
 system ("echo =========="); #DEBUG
 
-my @a = (1..50);
+my @a = (1..200);
 for(@a){
-    corrupt ("modtext.txt", 1, 200, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ   ");
+    corrupt ("modtext.txt", 1, 1000, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ   ");
 }
 
 system ("echo =========="); #DEBUG

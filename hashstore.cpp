@@ -15,6 +15,7 @@ bool hashstore::insert(std::string val){
 		}
 	}
 	else{
+		//std::cout << "HELLO" << std::endl;
 		found = true;
 	    values.erase(ref.find(val)->second);
 	}

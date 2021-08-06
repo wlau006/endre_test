@@ -6,8 +6,8 @@
 
 class chunkstore{
     private:
-	    std::list<std::pair<std::string,std::string>> values;
-	    std::unordered_map<std::string, std::list<std::pair<std::string,std::string>>::iterator> ref;
+	    std::list<std::string> values;
+	    std::unordered_map<std::string, std::list<std::string>::iterator> ref;
 	    int size;
 	public:
 	    chunkstore(int);
