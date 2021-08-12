@@ -8,19 +8,22 @@
 #include <string.h>
 #include <sys/types.h>
 #include "chunkstore.h"
+#include "rle.h"
 
 #define CHUNKSIZE 1024
 #define CHUNKSTORESIZE 1000
+#define RLE_ENABLED 0
 
 using namespace std;
 
 int main(){
+  rle decoder;
   int listenfd = 0,connfd = 0;
 
   struct sockaddr_in serv_addr;
 
-  char sendBuff[1024];
-  char recvBuff[2048];
+  char sendBuff[10];
+  char recvBuff[100000];
   
   listenfd = socket(AF_INET, SOCK_STREAM, 0);
   printf("socket retrieve success\n");
@@ -44,26 +47,67 @@ int main(){
   string receivemsg1 = "";
   string receivemsg2 = "";
   string debug = "";
+  string lenmsg = "";
+  unsigned int numlen = 0;
+  int position;
   while(1){
-      recv(connfd, recvBuff, sizeof(recvBuff), MSG_WAITALL);
-      receivemsg1 = recvBuff;
-      if(receivemsg1[0] == 'h'){
+      position = 1;
+      numlen = 0;
+      lenmsg = "";
+      receivemsg1 = "";
+      receivemsg2 = "";
+      recv(connfd, recvBuff, sizeof(recvBuff),0);
+      //cout << recvBuff << endl;
+      sprintf(sendBuff,"%c",'1');
+      send(connfd, sendBuff,sizeof(sendBuff),0);
+      if(recvBuff[0] == 'h'){
         //cout << "A" << endl;
-		    receivemsg1.erase(receivemsg1.begin());
+        while(recvBuff[position] != '.'){
+          lenmsg += recvBuff[position];
+          position++;
+        }
+        numlen = stoi(lenmsg);
+        printf("Length of msg: %d\n",numlen);
+        receivemsg1 = string(&recvBuff[position + 1],numlen);
 		    debug = CS.insert(receivemsg1,"");
 		    printf("Received duplicate request, pulling chunk from cache with associated key:\n");
         printf("%s\n",receivemsg1.c_str());
 		    //printf("=========================================================\n");
 		    //printf("%s\n",debug.c_str());
 		    //printf("=========================================================\n");
-	    }else if(receivemsg1[0] == 'c'){
+	    }else if(recvBuff[0] == 'c'){
         //cout << "B" << endl;
-		    receivemsg1.erase(receivemsg1.begin());
-		    recv(connfd, recvBuff, sizeof(recvBuff), MSG_WAITALL);
-		    receivemsg2 = recvBuff;
+		    
+        while(recvBuff[position] != '.'){
+          lenmsg += recvBuff[position];
+          position++;
+        }
+        numlen = stoi(lenmsg);
+        printf("Length of msg: %d\n",numlen);
+        receivemsg1 = string(&recvBuff[position + 1],numlen);
+		    
+        recv(connfd, recvBuff, sizeof(recvBuff),0);
+		    
+        position = 1;
+        numlen = 0;
+        lenmsg = "";
+        
+        while(recvBuff[position] != '.'){
+          lenmsg += recvBuff[position];
+          position++;
+        }
+        numlen = stoi(lenmsg);
+        printf("Length of msg: %d\n",numlen);
+		    receivemsg2 = string(&recvBuff[position + 1],numlen);
+        sprintf(sendBuff,"%c",'1');
+        send(connfd, sendBuff,sizeof(sendBuff),0);
 		    printf("Received new chunk, inserting into cache\n");
+        if(RLE_ENABLED == 1){
+          receivemsg1 = decoder.decode(receivemsg1);
+          //cout << "Hello" << endl;
+        }
 		    debug = CS.insert(receivemsg2,receivemsg1);
-	    }else if(receivemsg1[0] == 'd'){
+	    }else if(recvBuff[0] == 'd'){
         break;
       }
   }
