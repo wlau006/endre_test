@@ -12,11 +12,13 @@
 
 #define CHUNKSIZE 1024
 #define CHUNKSTORESIZE 1000
-#define RLE_ENABLED 0
+//#define RLE_ENABLED 1
 
 using namespace std;
 
 int main(){
+  int flag;
+  cin >> flag;
   rle decoder;
   int listenfd = 0,connfd = 0;
 
@@ -42,7 +44,6 @@ int main(){
       return -1;
   }
   connfd = accept(listenfd, (struct sockaddr*)NULL ,NULL); // accept awaiting request
-  
   chunkstore CS(CHUNKSTORESIZE);
   string receivemsg1 = "";
   string receivemsg2 = "";
@@ -67,11 +68,11 @@ int main(){
           position++;
         }
         numlen = stoi(lenmsg);
-        printf("Length of msg: %d\n",numlen);
+        //printf("Length of msg: %d\n",numlen);
         receivemsg1 = string(&recvBuff[position + 1],numlen);
 		    debug = CS.insert(receivemsg1,"");
-		    printf("Received duplicate request, pulling chunk from cache with associated key:\n");
-        printf("%s\n",receivemsg1.c_str());
+		    //printf("Received duplicate request, pulling chunk from cache with associated key:\n");
+        //printf("%s\n",receivemsg1.c_str());
 		    //printf("=========================================================\n");
 		    //printf("%s\n",debug.c_str());
 		    //printf("=========================================================\n");
@@ -83,7 +84,7 @@ int main(){
           position++;
         }
         numlen = stoi(lenmsg);
-        printf("Length of msg: %d\n",numlen);
+        //printf("Length of msg: %d\n",numlen);
         receivemsg1 = string(&recvBuff[position + 1],numlen);
 		    
         recv(connfd, recvBuff, sizeof(recvBuff),0);
@@ -97,12 +98,12 @@ int main(){
           position++;
         }
         numlen = stoi(lenmsg);
-        printf("Length of msg: %d\n",numlen);
+        //printf("Length of msg: %d\n",numlen);
 		    receivemsg2 = string(&recvBuff[position + 1],numlen);
         sprintf(sendBuff,"%c",'1');
         send(connfd, sendBuff,sizeof(sendBuff),0);
-		    printf("Received new chunk, inserting into cache\n");
-        if(RLE_ENABLED == 1){
+		    //printf("Received new chunk, inserting into cache\n");
+        if(flag == 1){
           receivemsg1 = decoder.decode(receivemsg1);
           //cout << "Hello" << endl;
         }

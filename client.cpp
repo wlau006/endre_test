@@ -19,7 +19,7 @@
 
 #define CHUNKSIZE 1024 //this will be a divisor of the filesize in bytes in our case.
 #define HASHSTORESIZE 1000
-#define RLE_ENABLED 0
+//#define RLE_ENABLED 1
 
 using namespace std;
 
@@ -28,9 +28,8 @@ using namespace std;
 int main(){
 
   rle encoder;
-  
-  auto start = chrono::high_resolution_clock::now();
-
+  int flag;
+  cin >> flag;
   int sockfd = 0,n = 0;
   char recvBuff[10];
   char sendBuff[100000];
@@ -57,6 +56,8 @@ int main(){
     printf("\n Error : Connect Failed \n");
     return 1;
   }
+  sleep(1);
+  auto start = chrono::high_resolution_clock::now();
   ostringstream file1;
   fstream f1("input.txt", fstream::in);
   f1.seekg (0, f1.end);
@@ -80,37 +81,37 @@ int main(){
     string funcinput = string(&charbuffer[0],1024);
 	  hashing_func.update(funcinput);
 	  string hashout = hashing_func.final();
-	  cout << "Calculated hash: " << hashout << endl;
+	  //cout << "Calculated hash: " << hashout << endl;
 
 
     if(HS.insert(hashout)){
-	  	printf("Found duplicate chunk, sending hash to receiver\n");
+	  	//printf("Found duplicate chunk, sending hash to receiver\n");
       hash += to_string(hashout.size()) + "." + hashout;
       bytes_sent += hash.size();
-      cout << "Size of hash: " << hash.size() << endl;
-      cout << "Hash msg: " << hash << endl;
-      cout << "Total Bytes Sent: " << bytes_sent << endl;
+      //cout << "Size of hash: " << hash.size() << endl;
+      //cout << "Hash msg: " << hash << endl;
+      //cout << "Total Bytes Sent: " << bytes_sent << endl;
       hash.copy(sendBuff,hash.size(),0);
 	  	send(sockfd,sendBuff,hash.size(),0);
       recv(sockfd,recvBuff,sizeof(recvBuff),MSG_WAITALL);
 	  }else{
-	  	printf("New chunk, sending chunk, then hash to receiver\n");
-      if(funcinput.size() != 0 && RLE_ENABLED == 1){
-        cout << "Size of input before: " << funcinput.size() << endl;
+	  	//printf("New chunk, sending chunk, then hash to receiver\n");
+      if(funcinput.size() != 0 && flag == 1){
+      //  cout << "Size of input before: " << funcinput.size() << endl;
         funcinput = encoder.encode(funcinput);
-        cout << "Size of input after RLE: " << funcinput.size() << endl;
+      //  cout << "Size of input after RLE: " << funcinput.size() << endl;
       }
       chunk += to_string(funcinput.size()) + "." + funcinput;
-      cout << "Size of message: " << chunk.size() << endl;
+      //cout << "Size of message: " << chunk.size() << endl;
       bytes_sent += chunk.size();
       chunk.copy(sendBuff,chunk.size(),0);
 	  	send(sockfd,sendBuff,chunk.size(),0);
       recv(sockfd,recvBuff,sizeof(recvBuff),MSG_WAITALL);
       hash += to_string(hashout.size()) + "." + hashout;
-      cout << "Size of hash: " << hash.size() << endl;
+      //cout << "Size of hash: " << hash.size() << endl;
       bytes_sent += hash.size();
-      cout << "Hash msg: " << hash << endl;
-      cout << "Total Bytes Sent: " << bytes_sent << endl;
+      //cout << "Hash msg: " << hash << endl;
+      //cout << "Total Bytes Sent: " << bytes_sent << endl;
       hash.copy(sendBuff,hash.size(),0);
 	  	send(sockfd,sendBuff, hash.size(),0);
       recv(sockfd,recvBuff,sizeof(recvBuff),MSG_WAITALL);
@@ -130,7 +131,10 @@ int main(){
   auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
   double percent = (double)bytes_sent/(double)filelength;
   cout << endl << endl;
-  cout << "=====================================================================" << endl << endl;
+  cout << "=====================================================================" << endl;
+  if(flag == 1){
+    cout << "RLE ENABLED" <<endl;
+  }
   cout << "Time taken to parse input file of size " << filelength << " bytes: " << duration.count() << " milliseconds" << endl;
   cout << "Bytes transferred between sender and receiver: " << bytes_sent << endl;
   double reduction = 100 - (percent * 100);
@@ -141,6 +145,8 @@ int main(){
   }else{
     cout << "Bytes transferred reduced by: " << reduction << "%" << endl;
   }
+  cout << "=====================================================================" << endl << endl;
+
 
   return 0;
 }
