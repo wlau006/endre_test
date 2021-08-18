@@ -7,6 +7,9 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include <zstd.h>
+#include <zlib.h>
+
 #include "chunkstore.h"
 #include "rle.h"
 
@@ -106,6 +109,14 @@ int main(){
         if(flag == 1){
           receivemsg1 = decoder.decode(receivemsg1);
           //cout << "Hello" << endl;
+        }else if(flag == 2){
+          char* tempstr = (char *) malloc(2048);
+          char* tempstr2 = (char *) malloc(receivemsg1.size());
+          receivemsg1.copy(tempstr2,receivemsg1.size(),0);
+          size_t tempstrlength = ZSTD_decompress(tempstr,2048,tempstr2,receivemsg1.size());
+          receivemsg1 = string(&tempstr[0],tempstrlength);
+          free(tempstr);
+          free(tempstr2);
         }
 		    debug = CS.insert(receivemsg2,receivemsg1);
 	    }else if(recvBuff[0] == 'd'){

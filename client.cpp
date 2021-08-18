@@ -8,13 +8,15 @@
 #include <unistd.h>
 #include <errno.h>
 #include <arpa/inet.h>
-#include "END_RE.h"
-#include "hashstore.h"
 #include <iostream>
 #include <fstream>
-#include "sha1.hpp"
 #include <algorithm>
 #include <chrono>
+#include <zstd.h>
+#include <zlib.h>
+
+#include "hashstore.h"
+#include "sha1.hpp"
 #include "rle.h"
 
 #define CHUNKSIZE 1024 //this will be a divisor of the filesize in bytes in our case.
@@ -100,6 +102,14 @@ int main(){
       //  cout << "Size of input before: " << funcinput.size() << endl;
         funcinput = encoder.encode(funcinput);
       //  cout << "Size of input after RLE: " << funcinput.size() << endl;
+      }else if(funcinput.size() != 0 && flag == 2){
+        char* tempstr = (char *) malloc(funcinput.size());
+        char* tempstr2 = (char *) malloc(2048);
+        funcinput.copy(tempstr,funcinput.size(),0);
+        size_t zstdlength = ZSTD_compress(tempstr2,2048,tempstr,funcinput.size(),10);
+        funcinput = string(&tempstr2[0],zstdlength);
+        free(tempstr);
+        free(tempstr2);
       }
       chunk += to_string(funcinput.size()) + "." + funcinput;
       //cout << "Size of message: " << chunk.size() << endl;
@@ -133,7 +143,9 @@ int main(){
   cout << endl << endl;
   cout << "=====================================================================" << endl;
   if(flag == 1){
-    cout << "RLE ENABLED" <<endl;
+    cout << "RLE ENABLED" << endl;
+  }else if(flag == 2){
+    cout << "ZSTD ENABLED" << endl;
   }
   cout << "Time taken to parse input file of size " << filelength << " bytes: " << duration.count() << " milliseconds" << endl;
   cout << "Bytes transferred between sender and receiver: " << bytes_sent << endl;
