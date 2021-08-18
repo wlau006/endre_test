@@ -115,8 +115,21 @@ int main(){
           receivemsg1.copy(tempstr2,receivemsg1.size(),0);
           size_t tempstrlength = ZSTD_decompress(tempstr,2048,tempstr2,receivemsg1.size());
           receivemsg1 = string(&tempstr[0],tempstrlength);
+          //printf("size of message: %ld\n",receivemsg1.size());
           free(tempstr);
           free(tempstr2);
+        }else if (flag == 3){
+        char* tempstr2 = (char *) malloc(receivemsg1.size());
+        receivemsg1.copy(tempstr2,receivemsg1.size(),0);
+        Bytef* tempstr2b = (Bytef*)tempstr2;
+        unsigned long templen = 2048;
+        char* tempstr = (char *) malloc(templen);
+        Bytef* tempstrb = (Bytef*)tempstr;
+        uncompress(tempstrb,&templen, tempstr2b, receivemsg1.size());
+        receivemsg1 = string(&tempstr2[0],templen);
+        //printf("size of message: %ld\n",receivemsg1.size());
+        free(tempstr);
+        free(tempstr2);
         }
 		    debug = CS.insert(receivemsg2,receivemsg1);
 	    }else if(recvBuff[0] == 'd'){

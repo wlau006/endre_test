@@ -110,9 +110,18 @@ int main(){
         funcinput = string(&tempstr2[0],zstdlength);
         free(tempstr);
         free(tempstr2);
+      }else if (funcinput.size() != 0 && flag == 3){
+        Bytef* tempstr = (Bytef *) malloc(funcinput.size());
+        funcinput.copy((char*)tempstr,funcinput.size(),0);
+        unsigned long templen = 2048;
+        Bytef* tempstr2 = (Bytef *) malloc(templen);
+        compress2(tempstr2,(uLongf*)&templen, tempstr, (uLong)funcinput.size(),1);
+        funcinput = string((char*)&tempstr2[0],templen);
+        free(tempstr);
+        free(tempstr2);
       }
       chunk += to_string(funcinput.size()) + "." + funcinput;
-      //cout << "Size of message: " << chunk.size() << endl;
+      cout << "Size of message: " << chunk.size() << endl;
       bytes_sent += chunk.size();
       chunk.copy(sendBuff,chunk.size(),0);
 	  	send(sockfd,sendBuff,chunk.size(),0);
@@ -146,6 +155,8 @@ int main(){
     cout << "RLE ENABLED" << endl;
   }else if(flag == 2){
     cout << "ZSTD ENABLED" << endl;
+  }else if(flag == 3){
+    cout << "ZLIB ENABLED" << endl;
   }
   cout << "Time taken to parse input file of size " << filelength << " bytes: " << duration.count() << " milliseconds" << endl;
   cout << "Bytes transferred between sender and receiver: " << bytes_sent << endl;
