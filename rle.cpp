@@ -52,10 +52,8 @@ string rle::encode(string input){
         //showbits(current >> j & mask);
         if(current >> j & mask == 0x01){
           if(which){
-            //  printf("a\n");
             runlength++;
           }else{
-            //  printf("b\n");
             rleoutput += to_string(runlength) + ',';
             runlength = 0;
             runlength++;
@@ -63,13 +61,11 @@ string rle::encode(string input){
           }
         }else{
           if(which){
-            //  printf("c\n");
             rleoutput += to_string(runlength) + ',';
             runlength = 0;
             runlength++;
             which = false;
           }else{
-            //  printf("d\n");
             runlength++;
           }
         }
@@ -150,10 +146,8 @@ string rle::encodev2(string input){
         //showbits(current >> j & mask);
         if(current >> j & mask == 0x01){
           if(which){
-              //printf("a\n");
             runlength++;
           }else{
-              //printf("b\n");
             rleoutput = uleb128(rleoutput,runlength);
             runlength = 0;
             runlength++;
@@ -161,13 +155,11 @@ string rle::encodev2(string input){
           }
         }else{
           if(which){
-            //  printf("c\n");
             rleoutput = uleb128(rleoutput,runlength);
             runlength = 0;
             runlength++;
             which = false;
           }else{
-            //  printf("d\n");
             runlength++;
           }
         }

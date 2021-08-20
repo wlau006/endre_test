@@ -47,6 +47,7 @@ int main(){
       return -1;
   }
   connfd = accept(listenfd, (struct sockaddr*)NULL ,NULL); // accept awaiting request
+  
   chunkstore CS(CHUNKSTORESIZE);
   string receivemsg1 = "";
   string receivemsg2 = "";
@@ -54,42 +55,47 @@ int main(){
   string lenmsg = "";
   unsigned int numlen = 0;
   int position;
+
   while(1){
+      
       position = 1;
       numlen = 0;
       lenmsg = "";
       receivemsg1 = "";
       receivemsg2 = "";
+
       recv(connfd, recvBuff, sizeof(recvBuff),0);
-      //cout << recvBuff << endl;
       sprintf(sendBuff,"%c",'1');
       send(connfd, sendBuff,sizeof(sendBuff),0);
+      
       if(recvBuff[0] == 'h'){
-        //cout << "A" << endl;
+
         while(recvBuff[position] != '.'){
           lenmsg += recvBuff[position];
           position++;
         }
         numlen = stoi(lenmsg);
+
         //printf("Length of msg: %d\n",numlen);
+
         receivemsg1 = string(&recvBuff[position + 1],numlen);
 		    debug = CS.insert(receivemsg1,"");
-		    //printf("Received duplicate request, pulling chunk from cache with associated key:\n");
+		    
+        //printf("Received duplicate request, pulling chunk from cache with associated key:\n");
         //printf("%s\n",receivemsg1.c_str());
-		    //printf("=========================================================\n");
-		    //printf("%s\n",debug.c_str());
-		    //printf("=========================================================\n");
+
 	    }else if(recvBuff[0] == 'c'){
-        //cout << "B" << endl;
 		    
         while(recvBuff[position] != '.'){
           lenmsg += recvBuff[position];
           position++;
         }
         numlen = stoi(lenmsg);
+
         //printf("Length of msg: %d\n",numlen);
+
         receivemsg1 = string(&recvBuff[position + 1],numlen);
-		    
+
         recv(connfd, recvBuff, sizeof(recvBuff),0);
 		    
         position = 1;
@@ -101,38 +107,57 @@ int main(){
           position++;
         }
         numlen = stoi(lenmsg);
+
         //printf("Length of msg: %d\n",numlen);
+
 		    receivemsg2 = string(&recvBuff[position + 1],numlen);
+
         sprintf(sendBuff,"%c",'1');
         send(connfd, sendBuff,sizeof(sendBuff),0);
+
 		    //printf("Received new chunk, inserting into cache\n");
-        if(flag == 1){
+
+        if(flag == 1){ //uncompressing RLE
+
           receivemsg1 = decoder.decodev2(receivemsg1);
-          //cout << "Hello" << endl;
-        }else if(flag == 2){
+
+        }else if(flag == 2){ //uncompressing Zstd
+
           char* tempstr = (char *) malloc(2048);
           char* tempstr2 = (char *) malloc(receivemsg1.size());
+
           receivemsg1.copy(tempstr2,receivemsg1.size(),0);
           size_t tempstrlength = ZSTD_decompress(tempstr,2048,tempstr2,receivemsg1.size());
           receivemsg1 = string(&tempstr[0],tempstrlength);
+
           //printf("size of message: %ld\n",receivemsg1.size());
+
           free(tempstr);
           free(tempstr2);
-        }else if (flag == 3){
+
+        }else if (flag == 3){ //Uncompressing ZLIB
+
         char* tempstr2 = (char *) malloc(receivemsg1.size());
         receivemsg1.copy(tempstr2,receivemsg1.size(),0);
         Bytef* tempstr2b = (Bytef*)tempstr2;
+
         unsigned long templen = 2048;
         char* tempstr = (char *) malloc(templen);
         Bytef* tempstrb = (Bytef*)tempstr;
+
         uncompress(tempstrb,&templen, tempstr2b, receivemsg1.size());
         receivemsg1 = string(&tempstr2[0],templen);
+
         //printf("size of message: %ld\n",receivemsg1.size());
+
         free(tempstr);
         free(tempstr2);
+
         }
-		    debug = CS.insert(receivemsg2,receivemsg1);
-	    }else if(recvBuff[0] == 'd'){
+
+		    debug = CS.insert(receivemsg2,receivemsg1); //insert new chunk/hash into the chunkstore
+
+	    }else if(recvBuff[0] == 'd'){ //close the connection
         break;
       }
   }

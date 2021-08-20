@@ -20,7 +20,7 @@
 #include "rle.h"
 
 #define CHUNKSIZE 1024 //this will be a divisor of the filesize in bytes in our case.
-#define HASHSTORESIZE 1000
+#define HASHSTORESIZE 1000 //SIZE IN MAX ENTRIES
 //#define RLE_ENABLED 1
 
 using namespace std;
@@ -31,13 +31,17 @@ int main(){
 
   rle encoder;
   int flag;
-  cin >> flag;
+  cin >> flag; //flag to determine which scheme we are using ontop of chunkmatch
+
   int sockfd = 0,n = 0;
+
   char recvBuff[10];
-  char sendBuff[100000];
+  char sendBuff[100000]; //size of send buffer, dont think this really needs to be this big
+
   struct sockaddr_in serv_addr;
-  int cachehits = 0;
-  //printf("1\n");
+  int cachehits = 0; //how many times we got a cache hit.
+
+  // SOCKET CONNECTION SETUP
   memset(recvBuff, '0' ,sizeof(recvBuff));
   if((sockfd = socket(AF_INET, SOCK_STREAM, 0))< 0){
     printf("\n Error : Could not create socket \n");
@@ -48,7 +52,7 @@ int main(){
     printf("\nInvalid address/ Address not supported \n");
     return -1;
   }
-  //printf("2\n");
+  
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_port = htons(5000);
 
@@ -59,13 +63,16 @@ int main(){
     return 1;
   }
   sleep(1);
-  auto start = chrono::high_resolution_clock::now();
+  
+  auto start = chrono::high_resolution_clock::now(); //TIMER START
+
   ostringstream file1;
-  fstream f1("input.txt", fstream::in);
+  fstream f1("input.txt", fstream::in); //OPEN INPUT FILE
   f1.seekg (0, f1.end);
-  int filelength = f1.tellg();
+  int filelength = f1.tellg(); //GET FILE LENGTH
   int bytes_sent = 0;
-  hashstore HS(HASHSTORESIZE);
+
+  hashstore HS(HASHSTORESIZE); //SET CACHE SIZE
   SHA1 hashing_func;
   char * charbuffer = new char [CHUNKSIZE];
   int i = 0;
@@ -78,79 +85,114 @@ int main(){
     if(f1.eof()){
       break;
     }
-    //charbuffer[CHUNKSIZE] = '\0';
-	  //cout << charbuffer << endl;
+
     string funcinput = string(&charbuffer[0],1024);
 	  hashing_func.update(funcinput);
 	  string hashout = hashing_func.final();
-	  //cout << "Calculated hash: " << hashout << endl;
+	  //cout << "Calculated hash: " << hashout << endl; //DEBUG
 
-
+    //This section tries to insert into hashstore, if there already exists one, it will return true but not insert a new entry.
+    //
+    //If the cache is full, it uses LRU to replace the entry in the hash store.
     if(HS.insert(hashout)){
+      
       cachehits++;
-	  	//printf("Found duplicate chunk, sending hash to receiver\n");
+	  	
+      //printf("Found duplicate chunk, sending hash to receiver\n"); //DEBUG
+      
       hash += to_string(hashout.size()) + "." + hashout;
       bytes_sent += hash.size();
-      //cout << "Size of hash: " << hash.size() << endl;
-      //cout << "Hash msg: " << hash << endl;
-      //cout << "Total Bytes Sent: " << bytes_sent << endl;
+      
+      //cout << "Size of hash: " << hash.size() << endl; //DEBUG
+      //cout << "Hash msg: " << hash << endl; //DEBUG
+      //cout << "Total Bytes Sent: " << bytes_sent << endl; //DEBUG
+      
       hash.copy(sendBuff,hash.size(),0);
-	  	send(sockfd,sendBuff,hash.size(),0);
-      recv(sockfd,recvBuff,sizeof(recvBuff),MSG_WAITALL);
+	  	send(sockfd,sendBuff,hash.size(),0); //Sends hash
+      recv(sockfd,recvBuff,sizeof(recvBuff),MSG_WAITALL); //Waits for confirmation signal from server to avoid synchronization errors
+
 	  }else{
-	  	//printf("New chunk, sending chunk, then hash to receiver\n");
-      if(funcinput.size() != 0 && flag == 1){
-      //  cout << "Size of input before: " << funcinput.size() << endl;
+	  	//printf("New chunk, sending chunk, then hash to receiver\n"); //DEBUG
+      
+      if(funcinput.size() != 0 && flag == 1){ //Encodes our chunk with RLE
+      
+      //  cout << "Size of input before: " << funcinput.size() << endl; //DEBUG
+      
         funcinput = encoder.encodev2(funcinput);
-        //cout << funcinput << endl;
-      //  cout << "Size of input after RLE: " << funcinput.size() << endl;
-      }else if(funcinput.size() != 0 && flag == 2){
+      
+      //  cout << "Size of input after RLE: " << funcinput.size() << endl; //DEBUG
+      
+      }else if(funcinput.size() != 0 && flag == 2){ //Encode our chunk with ZSTD compression
+        
         char* tempstr = (char *) malloc(funcinput.size());
         char* tempstr2 = (char *) malloc(2048);
+        
         funcinput.copy(tempstr,funcinput.size(),0);
         size_t zstdlength = ZSTD_compress(tempstr2,2048,tempstr,funcinput.size(),10);
         funcinput = string(&tempstr2[0],zstdlength);
+        
         free(tempstr);
         free(tempstr2);
-      }else if (funcinput.size() != 0 && flag == 3){
+
+      }else if (funcinput.size() != 0 && flag == 3){ //Encodes our chunk with ZLIB compression
+        
         Bytef* tempstr = (Bytef *) malloc(funcinput.size());
         funcinput.copy((char*)tempstr,funcinput.size(),0);
+        
         unsigned long templen = 2048;
         Bytef* tempstr2 = (Bytef *) malloc(templen);
+        
         compress2(tempstr2,(uLongf*)&templen, tempstr, (uLong)funcinput.size(),1);
         funcinput = string((char*)&tempstr2[0],templen);
+        
         free(tempstr);
         free(tempstr2);
+        
       }
+
       chunk += to_string(funcinput.size()) + "." + funcinput;
-      //cout << "Size of message: " << chunk.size() << endl;
+
+      //cout << "Size of message: " << chunk.size() << endl; //DEBUG
+
       bytes_sent += chunk.size();
+      
       chunk.copy(sendBuff,chunk.size(),0);
 	  	send(sockfd,sendBuff,chunk.size(),0);
       recv(sockfd,recvBuff,sizeof(recvBuff),MSG_WAITALL);
+      
       hash += to_string(hashout.size()) + "." + hashout;
-      //cout << "Size of hash: " << hash.size() << endl;
+
+      //cout << "Size of hash: " << hash.size() << endl; //DEBUG
+      
       bytes_sent += hash.size();
-      //cout << "Hash msg: " << hash << endl;
-      //cout << "Total Bytes Sent: " << bytes_sent << endl;
+      
+      //cout << "Hash msg: " << hash << endl; //DEBUG
+      //cout << "Total Bytes Sent: " << bytes_sent << endl; //DEBUG
+      
       hash.copy(sendBuff,hash.size(),0);
 	  	send(sockfd,sendBuff, hash.size(),0);
       recv(sockfd,recvBuff,sizeof(recvBuff),MSG_WAITALL);
 	  }
+
 	  i++;
+
   }
+
   char done = 'd';
   sprintf(sendBuff,"%c",done);
   send(sockfd,sendBuff,sizeof(sendBuff),0);
+  
   f1.close();
 
-  auto stop = chrono::high_resolution_clock::now();
+  auto stop = chrono::high_resolution_clock::now(); //Stop timer
   
   // Get duration. Substart timepoints to 
   // get durarion. To cast it to proper unit
   // use duration cast method
+
   auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
   double percent = (double)bytes_sent/(double)filelength;
+  
   cout << endl << endl;
   cout << "=====================================================================" << endl;
   if(flag == 1){
