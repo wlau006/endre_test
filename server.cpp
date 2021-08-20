@@ -107,7 +107,7 @@ int main(){
         send(connfd, sendBuff,sizeof(sendBuff),0);
 		    //printf("Received new chunk, inserting into cache\n");
         if(flag == 1){
-          receivemsg1 = decoder.decode(receivemsg1);
+          receivemsg1 = decoder.decodev2(receivemsg1);
           //cout << "Hello" << endl;
         }else if(flag == 2){
           char* tempstr = (char *) malloc(2048);

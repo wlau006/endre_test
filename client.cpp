@@ -36,7 +36,7 @@ int main(){
   char recvBuff[10];
   char sendBuff[100000];
   struct sockaddr_in serv_addr;
-
+  int cachehits = 0;
   //printf("1\n");
   memset(recvBuff, '0' ,sizeof(recvBuff));
   if((sockfd = socket(AF_INET, SOCK_STREAM, 0))< 0){
@@ -87,6 +87,7 @@ int main(){
 
 
     if(HS.insert(hashout)){
+      cachehits++;
 	  	//printf("Found duplicate chunk, sending hash to receiver\n");
       hash += to_string(hashout.size()) + "." + hashout;
       bytes_sent += hash.size();
@@ -100,7 +101,8 @@ int main(){
 	  	//printf("New chunk, sending chunk, then hash to receiver\n");
       if(funcinput.size() != 0 && flag == 1){
       //  cout << "Size of input before: " << funcinput.size() << endl;
-        funcinput = encoder.encode(funcinput);
+        funcinput = encoder.encodev2(funcinput);
+        //cout << funcinput << endl;
       //  cout << "Size of input after RLE: " << funcinput.size() << endl;
       }else if(funcinput.size() != 0 && flag == 2){
         char* tempstr = (char *) malloc(funcinput.size());
@@ -121,7 +123,7 @@ int main(){
         free(tempstr2);
       }
       chunk += to_string(funcinput.size()) + "." + funcinput;
-      cout << "Size of message: " << chunk.size() << endl;
+      //cout << "Size of message: " << chunk.size() << endl;
       bytes_sent += chunk.size();
       chunk.copy(sendBuff,chunk.size(),0);
 	  	send(sockfd,sendBuff,chunk.size(),0);
@@ -160,6 +162,7 @@ int main(){
   }
   cout << "Time taken to parse input file of size " << filelength << " bytes: " << duration.count() << " milliseconds" << endl;
   cout << "Bytes transferred between sender and receiver: " << bytes_sent << endl;
+  cout << "Total number of hashstore hits: " << cachehits << endl;
   double reduction = 100 - (percent * 100);
   if(reduction < 0){
     reduction = -reduction;
