@@ -19,9 +19,10 @@ This project was completed over the summer as a student research project.
 * Enter 0, 1, 2, or 3 on both client and server (Must Match) to select No Compression, RLE, ZSTD, or ZLIB
 * Wait for result
 
-## Things to Improve
+## Future Work
 1. Port all code to C, since this project was eventually meant to be applied to QEMU.
 This would mean that many of the data structures and functions in the C++ standard library would no longer be usuable, and substitutions would need to be found.
 2. Make the running process less of a headache.
 3. Work with the more advanced API of ZSTD and ZLIB to allow for even more finer grained optimization of the program.
 4. Create a more accurate representation of memory pages being transferred by the migration process
+5. Test performance on mininet's wireless simulator
