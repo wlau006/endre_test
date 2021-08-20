@@ -1,7 +1,5 @@
 # endre_test
-This is an implemenation in C++ of one of the techniques of ENDRE, the redundancy elimination scheme presentation at NSDI 2010.
-We primarly move ENDRE into the context of utilizing it to increase efficiency for live migration of virtual machines, specifically by reducing bandwidth consumption/latency
-with as little CPU and memory overhead as possible.
+This is an implemenation in C++ of one of the techniques of ENDRE, the redundancy elimination scheme presentation at NSDI 2010. Although ENDRE was used primarily with traffic reduction on enterprise networks, we move ENDRE into the context of utilizing it to increase efficiency for live migration of virtual machines. We seek specifically to reduce bandwidth consumption/latency, with as little CPU and memory overhead as possible.
 This project was completed over the summer as a student research project.
 
 ## Install Before Running
