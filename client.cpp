@@ -20,7 +20,7 @@
 #include "rle.h"
 
 #define CHUNKSIZE 1024 //this will be a divisor of the filesize in bytes in our case.
-#define HASHSTORESIZE 1000 //SIZE IN MAX ENTRIES
+#define HASHSTORESIZE 10000 //SIZE IN MAX ENTRIES
 //#define RLE_ENABLED 1
 
 using namespace std;

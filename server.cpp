@@ -14,7 +14,7 @@
 #include "rle.h"
 
 #define CHUNKSIZE 1024
-#define CHUNKSTORESIZE 1000
+#define CHUNKSTORESIZE 10000
 //#define RLE_ENABLED 1
 
 using namespace std;
