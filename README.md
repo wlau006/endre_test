@@ -10,12 +10,16 @@ This project was completed over the summer as a student research project.
 
 ## How to Run
 * Compile with __make__
-* Generate input using either script
+* Generate input using either script **
 * Run mininet's basic topology with __sudo mn -x__
 * Run the server program on h1
 * Run the client program on h2
-* Enter 0, 1, 2, or 3 on both client and server (Must Match) to select No Compression, RLE, ZSTD, or ZLIB
+* Enter 0, 1, 2, or 3 on client to select No Compression, RLE, ZSTD, or ZLIB
 * Wait for result
+
+** Input generation has been moved to a new script, __./dump_process_memory__ which can be used to extract the memory of a process whose name you already know.
+This works by using gdb to dump raw binary from the addresses specified in the __/proc/<pid>/maps__ file.
+This is an imperfect solution as it does not capture memory very efficiently and cannot get a very good sequential picture of which pages in memory are being edited.
 
 ## Future Work
 1. Port all code to C, since this project was eventually meant to be applied to QEMU.
