@@ -20,7 +20,7 @@
 #include "rle.h"
 
 #define CHUNKSIZE 1024 //this will be a divisor of the filesize in bytes in our case.
-#define HASHSTORESIZE 10000 //SIZE IN MAX ENTRIES
+#define HASHSTORESIZE 100000 //SIZE IN MAX ENTRIES
 //#define RLE_ENABLED 1
 
 using namespace std;
@@ -30,13 +30,16 @@ using namespace std;
 int main(){
 
   rle encoder;
-  int flag;
+  char flag;
+  string inputfile = "build-gccdump.txt";
+  std::chrono::microseconds cacheduration (0);
+  std::chrono::microseconds compressionduration (0);
+  printf("Checking input stream from: %s\n",inputfile.c_str());
   cin >> flag; //flag to determine which scheme we are using ontop of chunkmatch
-
   int sockfd = 0,n = 0;
 
   char recvBuff[10];
-  char sendBuff[100000]; //size of send buffer, dont think this really needs to be this big
+  char sendBuff[10000]; //size of send buffer, dont think this really needs to be this big
 
   struct sockaddr_in serv_addr;
   int cachehits = 0; //how many times we got a cache hit.
@@ -63,11 +66,12 @@ int main(){
     return 1;
   }
   sleep(1);
-  
+  sprintf(sendBuff,"%c", flag);
+  send(sockfd,sendBuff,sizeof(char),0);
   auto start = chrono::high_resolution_clock::now(); //TIMER START
 
   ostringstream file1;
-  fstream f1("input.txt", fstream::in); //OPEN INPUT FILE
+  fstream f1(inputfile, fstream::in); //OPEN INPUT FILE
   f1.seekg (0, f1.end);
   int filelength = f1.tellg(); //GET FILE LENGTH
   int bytes_sent = 0;
@@ -94,8 +98,10 @@ int main(){
     //This section tries to insert into hashstore, if there already exists one, it will return true but not insert a new entry.
     //
     //If the cache is full, it uses LRU to replace the entry in the hash store.
+    auto cachestart = chrono::high_resolution_clock::now();
     if(HS.insert(hashout)){
-      
+      auto cachestop = chrono::high_resolution_clock::now();
+      cacheduration += chrono::duration_cast<chrono::microseconds>(cachestop - cachestart);
       cachehits++;
 	  	
       //printf("Found duplicate chunk, sending hash to receiver\n"); //DEBUG
@@ -112,17 +118,19 @@ int main(){
       recv(sockfd,recvBuff,sizeof(recvBuff),MSG_WAITALL); //Waits for confirmation signal from server to avoid synchronization errors
 
 	  }else{
+      auto cachestop = chrono::high_resolution_clock::now();
+      cacheduration += chrono::duration_cast<chrono::microseconds>(cachestop - cachestart);
 	  	//printf("New chunk, sending chunk, then hash to receiver\n"); //DEBUG
-      
-      if(funcinput.size() != 0 && flag == 1){ //Encodes our chunk with RLE
-      
+      auto compressstart = chrono::high_resolution_clock::now();
+      if(funcinput.size() != 0 && flag == '1'){ //Encodes our chunk with RLE
+
       //  cout << "Size of input before: " << funcinput.size() << endl; //DEBUG
       
         funcinput = encoder.encodev2(funcinput);
       
       //  cout << "Size of input after RLE: " << funcinput.size() << endl; //DEBUG
       
-      }else if(funcinput.size() != 0 && flag == 2){ //Encode our chunk with ZSTD compression
+      }else if(funcinput.size() != 0 && flag == '2'){ //Encode our chunk with ZSTD compression
         
         char* tempstr = (char *) malloc(funcinput.size());
         char* tempstr2 = (char *) malloc(2048);
@@ -134,7 +142,7 @@ int main(){
         free(tempstr);
         free(tempstr2);
 
-      }else if (funcinput.size() != 0 && flag == 3){ //Encodes our chunk with ZLIB compression
+      }else if (funcinput.size() != 0 && flag == '3'){ //Encodes our chunk with ZLIB compression
         
         Bytef* tempstr = (Bytef *) malloc(funcinput.size());
         funcinput.copy((char*)tempstr,funcinput.size(),0);
@@ -149,6 +157,9 @@ int main(){
         free(tempstr2);
         
       }
+
+      auto compressstop = chrono::high_resolution_clock::now();
+      compressionduration += chrono::duration_cast<chrono::microseconds>(compressstop - compressstart);
 
       chunk += to_string(funcinput.size()) + "." + funcinput;
 
@@ -195,16 +206,20 @@ int main(){
   
   cout << endl << endl;
   cout << "=====================================================================" << endl;
-  if(flag == 1){
+  if(flag == '1'){
     cout << "RLE ENABLED" << endl;
-  }else if(flag == 2){
+  }else if(flag == '2'){
     cout << "ZSTD ENABLED" << endl;
-  }else if(flag == 3){
+  }else if(flag == '3'){
     cout << "ZLIB ENABLED" << endl;
   }
-  cout << "Time taken to parse input file of size " << filelength << " bytes: " << duration.count() << " milliseconds" << endl;
+  cout << "Input File Size: " << filelength << " bytes" << endl;
+  cout << "Total Time Taken: " << duration.count() << " milliseconds" << endl;
+  cout << "Time spent to compress: " << compressionduration.count() << " microseconds" << endl;
+  cout << "Time spent to cache: " << cacheduration.count() << " microseconds" << endl;
   cout << "Bytes transferred between sender and receiver: " << bytes_sent << endl;
   cout << "Total number of hashstore hits: " << cachehits << endl;
+  
   double reduction = 100 - (percent * 100);
   if(reduction < 0){
     reduction = -reduction;

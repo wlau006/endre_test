@@ -14,21 +14,21 @@
 #include "rle.h"
 
 #define CHUNKSIZE 1024
-#define CHUNKSTORESIZE 10000
+#define CHUNKSTORESIZE 100000
 //#define RLE_ENABLED 1
 
 using namespace std;
 
 int main(){
   int flag;
-  cin >> flag;
+  //cin >> flag;
   rle decoder;
   int listenfd = 0,connfd = 0;
 
   struct sockaddr_in serv_addr;
 
   char sendBuff[10];
-  char recvBuff[100000];
+  char recvBuff[10000];
   
   listenfd = socket(AF_INET, SOCK_STREAM, 0);
   printf("socket retrieve success\n");
@@ -47,7 +47,7 @@ int main(){
       return -1;
   }
   connfd = accept(listenfd, (struct sockaddr*)NULL ,NULL); // accept awaiting request
-  
+  printf("Accepted connection\n");
   chunkstore CS(CHUNKSTORESIZE);
   string receivemsg1 = "";
   string receivemsg2 = "";
@@ -55,6 +55,8 @@ int main(){
   string lenmsg = "";
   unsigned int numlen = 0;
   int position;
+  recv(connfd,recvBuff, sizeof(recvBuff),0);
+  flag = recvBuff[0] - '0';
 
   while(1){
       

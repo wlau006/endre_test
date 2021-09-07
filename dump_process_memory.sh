@@ -1,9 +1,13 @@
 #!/bin/bash
 
-output=$(pgrep -f -n "sysbench")
 
-cat snapshot.txt > memorydump.txt
+sleep 2
+outputfile="dav1ddump.txt"
+output=$(pgrep -f -n "dav1d")
 
+cat snapshot.txt > $outputfile
+
+for k in {1..20}; do
 #while kill -0 $output 2> /dev/null; do
 
     grep rw-p /proc/$output/maps \
@@ -16,9 +20,9 @@ cat snapshot.txt > memorydump.txt
 
     for i in *.dump
     do 
-       cat $i >> memorydump.txt
+       cat $i >> $outputfile
        rm $i
     done
-    echo "hello"
-    #sleep 2
-#done
+    echo "Run $k"
+    sleep 1
+done
