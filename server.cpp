@@ -57,7 +57,7 @@ int main(){
   int position;
   recv(connfd,recvBuff, sizeof(recvBuff),0);
   flag = recvBuff[0] - '0';
-
+  int counter = 0;
   while(1){
       
       position = 1;
@@ -65,7 +65,13 @@ int main(){
       lenmsg = "";
       receivemsg1 = "";
       receivemsg2 = "";
-
+      //counter++;
+      //if (counter == 100000){
+      //  printf("1\n");
+      //}else if(counter == 200000){
+      //  counter = 0;
+      //  printf("0\n");
+      //}
       recv(connfd, recvBuff, sizeof(recvBuff),0);
       sprintf(sendBuff,"%c",'1');
       send(connfd, sendBuff,sizeof(sendBuff),0);

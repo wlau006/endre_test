@@ -2,12 +2,12 @@
 
 
 sleep 2
-outputfile="dav1ddump.txt"
-output=$(pgrep -f -n "dav1d")
+outputfile="mbwdump.txt"
+output=$(pgrep -f -n "mbw")
 
 cat snapshot.txt > $outputfile
 
-for k in {1..20}; do
+for k in {1..1}; do
 #while kill -0 $output 2> /dev/null; do
 
     grep rw-p /proc/$output/maps \
