@@ -7,6 +7,7 @@ This project was completed over the summer as a student research project.
 * Install ZSTD here https://github.com/facebook/zstd
 * Install ZLIB here https://github.com/madler/zlib
 * Get fmem here https://github.com/NateBrune/fmem
+* Install Phoronix Test Suite here: https://phoronix-test-suite.com/?k=downloads
 
 ## How to Run
 * Compile with __make__
